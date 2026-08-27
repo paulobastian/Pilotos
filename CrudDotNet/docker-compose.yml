@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pilotos-postgres
+    environment:
+      POSTGRES_DB: pilotos
+      POSTGRES_USER: pilotos
+      POSTGRES_PASSWORD: pilotos123
+    ports:
+      - "5433:5432"
+    volumes:
+      - pilotos-pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pilotos -d pilotos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: src/Services/Pilotos.Auth/Dockerfile
+    container_name: pilotos-auth
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=pilotos;Username=pilotos;Password=pilotos123"
+      Jwt__Key: "chave-super-secreta-do-projeto-pilotos-troque-em-producao-123456"
+      Jwt__Issuer: "pilotos"
+      Jwt__Audience: "pilotos-clients"
+      Jwt__ExpireMinutes: "120"
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  clientes-service:
+    build:
+      context: .
+      dockerfile: src/Services/Pilotos.Clientes/Dockerfile
+    container_name: pilotos-clientes
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=pilotos;Username=pilotos;Password=pilotos123"
+      Jwt__Key: "chave-super-secreta-do-projeto-pilotos-troque-em-producao-123456"
+      Jwt__Issuer: "pilotos"
+      Jwt__Audience: "pilotos-clients"
+    ports:
+      - "5002:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  projetos-service:
+    build:
+      context: .
+      dockerfile: src/Services/Pilotos.Projetos/Dockerfile
+    container_name: pilotos-projetos
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=pilotos;Username=pilotos;Password=pilotos123"
+      Jwt__Key: "chave-super-secreta-do-projeto-pilotos-troque-em-producao-123456"
+      Jwt__Issuer: "pilotos"
+      Jwt__Audience: "pilotos-clients"
+    ports:
+      - "5003:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway/Pilotos.Gateway/Dockerfile
+    container_name: pilotos-gateway
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+    ports:
+      - "5000:8080"
+    depends_on:
+      - auth-service
+      - clientes-service
+      - projetos-service
+
+volumes:
+  pilotos-pgdata:
