@@ -334,7 +334,13 @@ export interface Stats {
   topCategories: { name: string; color: string; count: number }[];
   topDomains: { domain: string; count: number }[];
   byMonth: { month: string; count: number }[];
-  totals: { items: number; projects: number; tags: number; categories: number };
+  totals: {
+    items: number;
+    projects: number;
+    tags: number;
+    categories: number;
+    domains: number;
+  };
 }
 
 export async function getStats(): Promise<Stats> {
@@ -403,6 +409,7 @@ export async function getStats(): Promise<Stats> {
       projects: projectCount ?? 0,
       tags: tags.length,
       categories: categories.length,
+      domains: domainCount.size,
     },
   };
 }

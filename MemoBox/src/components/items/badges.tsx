@@ -40,14 +40,17 @@ export function TagChip({
   const content = (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-foreground/75",
         className,
       )}
       style={{
-        backgroundColor: `color-mix(in srgb, ${tag.color} 16%, transparent)`,
-        color: tag.color,
+        backgroundColor: `color-mix(in srgb, ${tag.color} 12%, transparent)`,
       }}
     >
+      <span
+        className="size-1.5 rounded-full"
+        style={{ backgroundColor: tag.color }}
+      />
       {tag.name}
     </span>
   );

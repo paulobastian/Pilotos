@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, ImageOff } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { ITEM_TYPE_MAP } from "@/lib/constants";
 import type { ItemWithRelations } from "@/lib/types";
-import { cn, faviconFor, relativeTime } from "@/lib/utils";
+import { faviconFor, relativeTime } from "@/lib/utils";
 import { StatusBadge, TagChip, TypeBadge } from "@/components/items/badges";
 import {
   FavoriteButton,
@@ -12,63 +12,75 @@ import {
   useOpenLink,
 } from "@/components/items/item-actions";
 
-function Thumb({ item }: { item: ItemWithRelations }) {
-  const Icon = ITEM_TYPE_MAP[item.type].icon ?? ImageOff;
-  if (item.thumbnail) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src={item.thumbnail}
-        alt=""
-        loading="lazy"
-        className="h-full w-full object-cover"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.display = "none";
-        }}
-      />
-    );
-  }
+function HoverActions({
+  item,
+  className = "",
+}: {
+  item: ItemWithRelations;
+  className?: string;
+}) {
+  const openLink = useOpenLink();
   return (
-    <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
-      {Icon && <Icon className="size-8" />}
+    <div
+      className={
+        "flex items-center gap-0.5 rounded-md border bg-background/90 p-0.5 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 focus-within:opacity-100 " +
+        className
+      }
+    >
+      {item.url && (
+        <button
+          onClick={() => openLink(item)}
+          className="grid size-7 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Abrir link"
+        >
+          <ExternalLink className="size-4" />
+        </button>
+      )}
+      <FavoriteButton item={item} className="size-7" />
+      <ItemActionsMenu item={item} />
     </div>
   );
 }
 
 export function ItemCard({ item }: { item: ItemWithRelations }) {
-  const openLink = useOpenLink();
   const favicon = item.favicon ?? faviconFor(item.domain);
+  const TypeIcon = ITEM_TYPE_MAP[item.type].icon;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md">
-      <Link
-        href={`/items/${item.id}`}
-        className="relative block aspect-[16/9] overflow-hidden border-b bg-muted"
-      >
-        <Thumb item={item} />
-      </Link>
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card transition-all hover:border-foreground/15 hover:shadow-sm">
+      {item.thumbnail && (
+        <Link
+          href={`/items/${item.id}`}
+          className="relative block aspect-[16/9] overflow-hidden border-b bg-muted"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.thumbnail}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <HoverActions item={item} className="absolute right-2 top-2" />
+        </Link>
+      )}
 
-      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-background/85 p-0.5 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-        {item.url && (
-          <button
-            onClick={() => openLink(item)}
-            className="grid size-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Abrir link"
-          >
-            <ExternalLink className="size-4" />
-          </button>
-        )}
-        <FavoriteButton item={item} />
-        <ItemActionsMenu item={item} />
-      </div>
-
-      <div className="flex flex-1 flex-col gap-2 p-3">
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {favicon ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={favicon} alt="" className="size-3.5 rounded-sm" loading="lazy" />
+            <img src={favicon} alt="" className="size-4 rounded-sm" loading="lazy" />
+          ) : TypeIcon ? (
+            <TypeIcon className="size-3.5" />
           ) : null}
-          <span className="truncate">{item.domain ?? "sem link"}</span>
+          <span className="truncate">
+            {item.domain ?? ITEM_TYPE_MAP[item.type].label}
+          </span>
+          {!item.thumbnail && (
+            <HoverActions item={item} className="ml-auto -my-1" />
+          )}
         </div>
 
         <Link
@@ -79,22 +91,21 @@ export function ItemCard({ item }: { item: ItemWithRelations }) {
         </Link>
 
         {item.description && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
+          <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {item.description}
+          </p>
         )}
 
         {item.personal_note && (
-          <p className="line-clamp-2 rounded bg-muted/60 px-2 py-1 text-xs italic text-muted-foreground">
+          <p className="line-clamp-2 border-l-2 border-border pl-2 text-xs italic text-muted-foreground">
             {item.personal_note}
           </p>
         )}
 
-        <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1.5">
           <TypeBadge type={item.type} />
           {item.category && (
-            <span
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-              title="Categoria"
-            >
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <span
                 className="size-1.5 rounded-full"
                 style={{ backgroundColor: item.category.color }}
@@ -102,15 +113,17 @@ export function ItemCard({ item }: { item: ItemWithRelations }) {
               {item.category.name}
             </span>
           )}
-          {item.tags.slice(0, 3).map((t) => (
+          {item.tags.slice(0, 2).map((t) => (
             <TagChip key={t.id} tag={t} href={`/tags/${t.id}`} />
           ))}
-          {item.tags.length > 3 && (
-            <span className="text-xs text-muted-foreground">+{item.tags.length - 3}</span>
+          {item.tags.length > 2 && (
+            <span className="text-xs text-muted-foreground">
+              +{item.tags.length - 2}
+            </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
+        <div className="mt-auto flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
           <StatusBadge status={item.status} />
           <span>{relativeTime(item.created_at)}</span>
         </div>

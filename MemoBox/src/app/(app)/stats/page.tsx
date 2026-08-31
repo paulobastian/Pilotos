@@ -1,117 +1,76 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getStats } from "@/lib/queries";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MonthlyBar, TypePie } from "@/components/stats/charts";
+import {
+  MonthlyBreakdown,
+  RankedList,
+  TypeBreakdown,
+} from "@/components/stats/charts";
 
 export const metadata: Metadata = { title: "Estatísticas" };
 
 export default async function StatsPage() {
   const stats = await getStats();
 
-  const totals = [
-    { label: "Itens", value: stats.totals.items },
+  const kpis = [
     { label: "Projetos", value: stats.totals.projects },
     { label: "Tags", value: stats.totals.tags },
     { label: "Categorias", value: stats.totals.categories },
+    { label: "Domínios", value: stats.totals.domains },
   ];
 
   return (
     <>
       <PageHeader title="Estatísticas" description="Um retrato da sua biblioteca." />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {totals.map((t) => (
-          <div key={t.label} className="rounded-xl border bg-card p-4">
-            <p className="text-sm text-muted-foreground">{t.label}</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums">{t.value}</p>
-          </div>
-        ))}
+      {/* Hero figure — the one number the page leads with. */}
+      <div className="rounded-xl border bg-card p-6">
+        <p className="text-sm text-muted-foreground">Itens na biblioteca</p>
+        <p className="mt-1 text-5xl font-semibold leading-none">{stats.totals.items}</p>
+        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {kpis.map((k) => (
+            <div key={k.label}>
+              <p className="text-2xl font-semibold leading-none">{k.value}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{k.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Por tipo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TypePie data={stats.byType} />
-          </CardContent>
-        </Card>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <TypeBreakdown data={stats.byType} />
+        <MonthlyBreakdown data={stats.byMonth} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Adicionados por mês</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MonthlyBar data={stats.byMonth} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Tags mais usadas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {stats.topTags.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhuma tag em uso.</p>
-            )}
-            {stats.topTags.map((t) => (
-              <div key={t.name} className="flex items-center gap-3 text-sm">
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: t.color }}
-                />
-                <span className="flex-1 truncate">{t.name}</span>
-                <span className="tabular-nums text-muted-foreground">{t.count}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Domínios mais salvos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {stats.topDomains.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum link salvo ainda.</p>
-            )}
-            {stats.topDomains.map((d) => (
-              <div key={d.domain} className="flex items-center gap-3 text-sm">
-                <Link
-                  href={`/search?q=${encodeURIComponent(d.domain)}`}
-                  className="flex-1 truncate hover:underline"
-                >
-                  {d.domain}
-                </Link>
-                <span className="tabular-nums text-muted-foreground">{d.count}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Categorias mais usadas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {stats.topCategories.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhuma categoria em uso.</p>
-            )}
-            {stats.topCategories.map((c) => (
-              <div key={c.name} className="flex items-center gap-3 text-sm">
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: c.color }}
-                />
-                <span className="flex-1 truncate">{c.name}</span>
-                <span className="tabular-nums text-muted-foreground">{c.count}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <RankedList
+          title="Tags mais usadas"
+          emptyLabel="Nenhuma tag em uso."
+          rows={stats.topTags.map((t) => ({
+            key: t.name,
+            label: t.name,
+            count: t.count,
+            color: t.color,
+          }))}
+        />
+        <RankedList
+          title="Categorias mais usadas"
+          emptyLabel="Nenhuma categoria em uso."
+          rows={stats.topCategories.map((c) => ({
+            key: c.name,
+            label: c.name,
+            count: c.count,
+            color: c.color,
+          }))}
+        />
+        <RankedList
+          title="Domínios mais salvos"
+          emptyLabel="Nenhum link salvo ainda."
+          rows={stats.topDomains.map((d) => ({
+            key: d.domain,
+            label: d.domain,
+            count: d.count,
+            href: `/search?q=${encodeURIComponent(d.domain)}`,
+          }))}
+        />
       </div>
     </>
   );

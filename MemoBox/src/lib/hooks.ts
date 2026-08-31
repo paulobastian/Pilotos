@@ -3,6 +3,20 @@
 import * as React from "react";
 import type { ViewMode } from "@/lib/types";
 
+/**
+ * True only after the first client render. The standard guard against
+ * hydration mismatches when the initial paint can't know a client-only value
+ * (theme, localStorage). Setting state once on mount is intentional here.
+ */
+export function useMounted(): boolean {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+  return mounted;
+}
+
 /** Debounce any fast-changing value (search input, etc.). */
 export function useDebounce<T>(value: T, delay = 250): T {
   const [debounced, setDebounced] = React.useState(value);
@@ -31,6 +45,8 @@ export function useViewMode(): [ViewMode, (v: ViewMode) => void] {
   const [mode, setMode] = React.useState<ViewMode>("grid");
 
   React.useEffect(() => {
+    // Sync from storage after mount (SSR can't read localStorage).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(readViewMode());
     const onStorage = (e: StorageEvent) => {
       if (e.key === VIEW_KEY) setMode(readViewMode());

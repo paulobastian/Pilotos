@@ -4,20 +4,23 @@ import {
   Compass,
   FolderKanban,
   Inbox,
-  Lightbulb,
-  Link2,
-  ListChecks,
   Sparkles,
   Star,
 } from "lucide-react";
 import { getDashboardCounts, getItems, getProfile } from "@/lib/queries";
+import { pluralize } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/empty-state";
-import { AddFirstItemButton, AddItemButton } from "@/components/items/add-buttons";
+import { AddFirstItemButton } from "@/components/items/add-buttons";
 import { ItemCard } from "@/components/items/item-card";
 
 export const metadata: Metadata = { title: "Dashboard" };
+
+function greetingFor(date = new Date()) {
+  const h = date.getHours();
+  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+}
 
 export default async function DashboardPage() {
   const [counts, profile, recent, unopened] = await Promise.all([
@@ -28,8 +31,7 @@ export default async function DashboardPage() {
   ]);
 
   const name = profile?.name?.split(" ")[0];
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+  const greeting = greetingFor();
 
   if (counts.all === 0) {
     return (
@@ -47,32 +49,39 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title={`${greeting}${name ? `, ${name}` : ""}`}
-        description="Visão geral da sua biblioteca."
-        action={<AddItemButton />}
-      />
+      <PageHeader title={`${greeting}${name ? `, ${name}` : ""}`} />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard label="Total de itens" value={counts.all} icon={ListChecks} href="/items" />
-        <StatCard
-          label="Não organizados"
-          value={counts.inbox}
-          icon={Inbox}
-          href="/inbox"
-          hint={counts.inbox > 0 ? "esperando na Inbox" : "tudo em dia"}
-        />
+      {/* Hero figure — the one number the dashboard leads with. */}
+      <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border bg-card p-6">
+        <div>
+          <p className="text-sm text-muted-foreground">Na sua biblioteca</p>
+          <p className="mt-1 text-5xl font-semibold leading-none">
+            {counts.all}
+            <span className="ml-2 align-baseline text-base font-normal text-muted-foreground">
+              {pluralize(counts.all, "item salvo", "itens salvos")}
+            </span>
+          </p>
+        </div>
+        {counts.inbox > 0 && (
+          <Link
+            href="/inbox"
+            className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-400"
+          >
+            {counts.inbox} {pluralize(counts.inbox, "item", "itens")} para organizar na Inbox →
+          </Link>
+        )}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Inbox" value={counts.inbox} icon={Inbox} href="/inbox" />
         <StatCard label="Favoritos" value={counts.favorites} icon={Star} href="/favorites" />
         <StatCard
-          label="Não abertos"
+          label="Ainda não abertos"
           value={counts.unopened}
           icon={Compass}
-          href="/items?sort=recent"
+          href="/items"
         />
-        <StatCard label="Ideias" value={counts.idea} icon={Lightbulb} href="/type/idea" />
-        <StatCard label="Links" value={counts.link} icon={Link2} href="/type/link" />
         <StatCard label="Projetos" value={counts.projects} icon={FolderKanban} href="/projects" />
-        <StatCard label="Arquivados" value={counts.archived} icon={ListChecks} href="/archived" />
       </div>
 
       <section className="mt-10">
@@ -91,10 +100,10 @@ export default async function DashboardPage() {
 
       {unopened.items.length > 0 && (
         <section className="mt-10">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
             <h2 className="font-semibold">Continue explorando</h2>
             <span className="text-sm text-muted-foreground">
-              itens que você salvou mas ainda não abriu
+              salvos, mas você ainda não abriu
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
