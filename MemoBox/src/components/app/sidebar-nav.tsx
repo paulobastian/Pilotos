@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArrowUpRight } from "lucide-react";
 import {
   LIBRARY_NAV,
   PRIMARY_NAV,
@@ -23,9 +24,29 @@ function NavLink({
 }) {
   const pathname = usePathname();
   const active =
-    pathname === item.href ||
-    (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+    !item.external &&
+    (pathname === item.href ||
+      (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`)));
   const Icon = item.icon;
+
+  if (item.external) {
+    return (
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onNavigate}
+        className={cn(
+          "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+          "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground",
+        )}
+      >
+        <Icon className="size-4 shrink-0 opacity-80" />
+        <span className="flex-1 truncate">{item.label}</span>
+        <ArrowUpRight className="size-3.5 shrink-0 opacity-50" />
+      </a>
+    );
+  }
 
   return (
     <Link

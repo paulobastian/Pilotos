@@ -3,6 +3,7 @@ import {
   Bookmark,
   BookOpen,
   Box,
+  ClipboardList,
   FileText,
   Folder,
   GraduationCap,
@@ -79,6 +80,8 @@ export type NavItem = {
   label: string;
   icon: LucideIcon;
   countKey?: string;
+  /** When true, `href` is an absolute URL opened in a new tab. */
+  external?: boolean;
 };
 
 export const PRIMARY_NAV: NavItem[] = [
@@ -105,6 +108,12 @@ export const LIBRARY_NAV: NavItem[] = [
 export const SYSTEM_NAV: NavItem[] = [
   { href: "/archived", label: "Arquivados", icon: Archive, countKey: "archived" },
   { href: "/trash", label: "Lixeira", icon: Trash2, countKey: "trash" },
+  {
+    href: "https://docs.google.com/forms/d/e/1FAIpQLScZOpUSpc2wS1U-gsxEiP05FrO0ATOMDK_KbKRxZ8nTTRV-KQ/viewform?usp=publish-editor",
+    label: "Pesquisa Rápida",
+    icon: ClipboardList,
+    external: true,
+  },
 ];
 
 export const DEFAULT_CATEGORIES = [
