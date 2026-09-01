@@ -12,7 +12,9 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:seed": "node scripts/seed.mjs",
-    "setup": "supabase start && supabase migration up && node scripts/seed.mjs"
+    "setup": "supabase start && supabase migration up && node scripts/seed.mjs",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

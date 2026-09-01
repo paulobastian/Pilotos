@@ -1,0 +1,32 @@
+# Runs the Next.js app in Docker. The Supabase stack stays on the host:
+#
+#   npx supabase start      # Postgres + Auth + Studio (Docker, via Supabase CLI)
+#   docker compose up        # this app
+#
+# The browser talks to Supabase at http://127.0.0.1:54321 (NEXT_PUBLIC_SUPABASE_URL
+# from .env.local). The app's server code runs inside the container, so it reaches
+# the same Supabase through the Docker gateway via SUPABASE_SERVER_URL below.
+
+services:
+  app:
+    build:
+      context: .
+    container_name: memobox_app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      # host.docker.internal → the host, where `npx supabase start` published 54321.
+      SUPABASE_SERVER_URL: "http://host.docker.internal:54321"
+      # File watching over a Windows bind mount needs polling for hot reload.
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Live source for hot reload; keep container-built node_modules/.next.
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped

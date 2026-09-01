@@ -50,6 +50,33 @@ npm run dev
 App em <http://localhost:3000> · Supabase Studio em <http://localhost:54323>
 · E-mails de teste (confirmação/reset) em <http://localhost:54324> (Mailpit).
 
+## Como rodar (app no Docker)
+
+O Supabase local já roda em Docker (via Supabase CLI). Para rodar **o app
+também em container**, sem Node instalado na máquina:
+
+```bash
+cd MemoBox
+
+# 1. Sobe o Supabase local no host (Postgres + Auth + Studio)
+npx supabase start
+npx supabase migration up
+npm run db:seed          # precisa de Node; ou rode uma vez fora do Docker
+
+# 2. Sobe o app em container (build na primeira vez)
+npm run docker:up        # docker compose up --build
+```
+
+`npm run docker:down` derruba o container do app. `npx supabase stop` derruba o
+Supabase.
+
+Como funciona: o navegador fala com o Supabase em `http://127.0.0.1:54321`
+(`NEXT_PUBLIC_SUPABASE_URL` do `.env.local`); o código server-side roda dentro do
+container e alcança o mesmo Supabase por `host.docker.internal:54321`
+(`SUPABASE_SERVER_URL`, definido no [`docker-compose.yml`](docker-compose.yml)).
+O código-fonte é montado no container, então hot reload funciona — no Windows o
+watch usa polling (pode ficar um pouco mais lento).
+
 ### Conta de demonstração
 
 ```
